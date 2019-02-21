@@ -1,0 +1,11 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+TMP_FILE=/tmp/rmv-rv.lst
+(set -x;chkpkgs | awk '{ print $2; }' | cut -f1 -d: | egrep -v "Name|Status|Err\?" | grep . >${TMP_FILE})
+#exit
+
+for FIL in `cat ${TMP_FILE}`; do
+(set -x;sudo apt-get --purge --yes remove ${FIL})
+done

@@ -1,0 +1,5 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+(set -x;dpkg -l | egrep -v "^ii")

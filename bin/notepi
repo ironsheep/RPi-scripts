@@ -1,0 +1,35 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+HOSTNAME=`uname -n`
+HOME_PI=pimon1
+
+TARGET_DIR="/var/status/${HOSTNAME}"
+TMP_DIR=~/tmp
+if [ ! -d ${TMP_DIR} ]; then
+ (set -x;mkdir -p ${TMP_DIR})
+fi
+
+if [ "${HOSTNAME}" != "${HOME_PI}" ]; then
+  USE_SCP=YES
+else
+  USE_SCP=NO
+fi
+#echo "$SCRIPT: USE_SCP=[${USE_SCP}]"
+
+MESSAGE=$1
+if [ -z "${MESSAGE}" ]; then
+  MESSAGE=""
+fi
+
+OUTFILE=note.txt
+echo "${MESSAGE}" >"${TMP_DIR}/${OUTFILE}"
+
+if [ "${USE_SCP}" = "YES" ]; then
+  scp -p ${TMP_DIR}/${OUTFILE} pi@pimon1.home:${TARGET_DIR}
+else
+  (set -x;cp -p ${TMP_DIR}/${OUTFILE} ${TARGET_DIR})
+fi
+
+exit 0

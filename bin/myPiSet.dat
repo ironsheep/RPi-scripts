@@ -1,0 +1,37 @@
+# stephen m's Raspberry pi basic
+#192.168.100.40  pitoo.home             pitoo
+# stephen m's Raspberry pi2+ for use as virtual USB (model a21041 16GB SD)
+192.168.100.41  pitvos.home            pitvos
+# stephen m's Raspberry pi2+ experimental node (model a21041 32GB SD)
+192.168.100.42  pinode1.home           pinode1
+# stephen m's Raspberry pi2+ experimental node (model a01041 32GB SD)
+192.168.100.43  pinode2.home           pinode2
+# stephen m's Raspberry piB experimental node (model a02082 32GB SD)
+192.168.100.44  pinode3.home           pinode3
+# stephen m's Raspberry piB experimental node (model a02082 32GB SD)
+192.168.100.45  pinode4.home           pinode4
+# stephen m's Raspberry pi (BrickPI Dexter Industries - I/F for lego stuff)
+192.168.100.46  brickpi.home        brickpi
+# stephen m's Raspberry piB experimental node (model a02082 32GB SD)
+192.168.100.47  piplant1.home          piplant1
+192.168.100.147	piplant1-wifi.home	piplant1-wifi
+192.168.100.48  picam.home             picam
+192.168.100.148	picam-wifi.home        picam-wifi
+# stephen m's Raspberry pi (BrickPI-2 Dexter Industries - I/F for lego stuff)
+192.168.100.49  dex.home               dex
+192.168.100.149	dex-wifi.home		dex-wifi
+# parallax web server hardware - Spinneret!
+# stephen m's Raspberry pi2+ network monitoring node (model a21041 32GB SD)
+192.168.100.80  pimon1.home             pimon1
+# stephen m's Raspberry pi3+ for BTLE experimentation
+192.168.100.81  pibtle.home            pibtle
+# stephen m's Raspberry pi2+ w/7" touchscreen (model a21041 8GB SD)
+192.168.100.82  pitouch.home           pitouch
+# Stephen's gaming system RPi
+192.168.100.83	retropie.home			retropie
+192.168.100.183	retropie-wifi.home			retropie-wifi
+192.168.100.84	pitre.home 	       pitre
+192.168.100.184	pitre-wifi.home      pitre-wifi
+192.168.100.85	pihome.home 	       pihome
+192.168.100.185	pihome-wifi.home      pihome-wifi
+

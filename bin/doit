@@ -1,0 +1,56 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+#SCRIPT=`basename $0 .bat`
+#SCRIPT=`basename $SCRIPT .ksh`
+
+echo ""
+
+SCR_TO_RUN=$1
+if [ -z "$SCR_TO_RUN" ]; then
+	echo "$SCRIPT: ERROR- need \$1 as scriptname" >&2
+	exit 2;
+fi
+
+SCR_ACTUAL=$(readlink --canonicalize $SCR_TO_RUN)
+echo "SCR_ACTUAL=[${SCR_ACTUAL}]"
+
+if [ ! -x "${SCR_ACTUAL}" ]; then
+	echo "$SCRIPT: ERROR-!! make $SCR_TO_RUN executable, and rerun!!"
+	exit 1;
+fi
+shift
+
+OUTDIR="Log Files"
+if [ ! -d "$OUTDIR" ]; then
+	mkdir "$OUTDIR"
+	echo "$SCRIPT: Created $OUTDIR Directory"
+fi
+
+# remove dir and suffix components of name
+OUTBASE=`basename $SCR_TO_RUN .bat`
+OUTBASE=`basename $OUTBASE .ksh`
+OUTBASE=`basename $OUTBASE .exe`
+SFX=1
+OUTFILE="${OUTDIR}/${OUTBASE}.${SFX}.log"
+while [ -f "$OUTFILE" ]; do
+    SFX=`expr $SFX + 1`
+    OUTFILE="${OUTDIR}/${OUTBASE}.${SFX}.log"
+done
+
+if [ -s "$OUTFILE" ]; then
+    echo "$SCRIPT: WARNING- overwriting $OUTFILE" >&2
+fi
+echo "$SCRIPT: INFO- logging to $OUTFILE"
+
+NOW=`date +%y%m%d-%H:%M:%S`
+echo "$SCRIPT: $NOW: +$SCR_ACTUAL $*"
+echo "$SCRIPT: $NOW: +$SCR_ACTUAL $*" >"$OUTFILE"
+
+$SCR_TO_RUN $* 2>&1 | tee -a "$OUTFILE"
+
+NOW=`date +%y%m%d-%H:%M:%S`
+echo "" 
+echo "$SCRIPT: $NOW: Done ($OUTFILE)"
+echo "" >>"$OUTFILE"
+echo "$SCRIPT: $NOW: Done ($OUTFILE)" >>"$OUTFILE"

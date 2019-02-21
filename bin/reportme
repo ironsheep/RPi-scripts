@@ -1,0 +1,93 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+HOSTNAME=`uname -n`
+HOME_PI=pimon1
+
+TARGET_DIR="/var/status/${HOSTNAME}"
+TMP_DIR=~/tmp
+TMP_FILE="${TMP_DIR}/${SCRIPT}.tmp"
+
+if [ ! -d ${TMP_DIR} ]; then
+ (set -x;mkdir -p ${TMP_DIR})
+fi
+
+if [ "${HOSTNAME}" != "${HOME_PI}" ]; then
+  USE_SCP=YES
+else
+  USE_SCP=NO
+fi
+#echo "$SCRIPT: USE_SCP=[${USE_SCP}]"
+
+FILES=""
+
+# --> get device Model Info
+#
+#cat /proc/device-tree/model >${TMP_FILE} 2>/dev/null
+#echo "\n" >>${TMP_FILE} 
+OUTFILE=model.txt
+MODEL=`cat /proc/device-tree/model | tr -d '\0'`
+echo "${MODEL}" >"${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+# --> get linux release name
+OUTFILE=rls-name.txt
+RLS_NAME=`cat /etc/apt/sources.list | egrep -v '#' | awk '{ print $3 }' | sort -u`
+echo "${RLS_NAME}" >"${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+# --> get linux version
+#
+OUTFILE=build.txt
+VERSION=`uname -r`
+echo "${VERSION}" >"${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+# --> get uptime
+#
+OUTFILE=uptime.txt
+UPTIME=`uptime`
+echo "${UPTIME}" >"${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+# --> get last update date
+#
+OUTFILE=lastupd.txt
+UPDFLG_FILE=~/bin/lastupd.date
+if [ ! -f ${UPDFLG_FILE} ] ; then
+	DATETIME=`date +%y%m%d%H%m`
+	echo "${DATETIME}" >${UPDFLG_FILE}
+        touch -t ${DATETIME} ${UPDFLG_FILE}
+fi
+cp -p ${UPDFLG_FILE} "${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+# --> get filesystem space
+#
+OUTFILE=df.txt
+`df >"${TMP_DIR}/${OUTFILE}" 2>&1`
+FILES="${FILES} ${OUTFILE}"
+
+
+# --> get system temps
+#
+OUTFILE=systemp.txt
+SYSTEMP=`/opt/vc/bin/vcgencmd measure_temp | tr -d '\0'`
+echo "${SYSTEMP}" >"${TMP_DIR}/${OUTFILE}"
+FILES="${FILES} ${OUTFILE}"
+
+if [ "${USE_SCP}" = "YES" ]; then
+	for FIL in ${FILES}; do
+		echo "$SCRIPT: copying $FIL"
+		scp -p ${TMP_DIR}/${FIL} pi@pimon1.home:${TARGET_DIR}
+	done
+else
+	if [ ! -d "${TARGET_DIR}" ]; then
+	  (set -x;mkdir -p "${TARGET_DIR}")
+        fi
+	for FIL in ${FILES}; do
+		echo "$SCRIPT: copying $FIL"
+		cp -p ${TMP_DIR}/${FIL} ${TARGET_DIR}
+	done
+fi

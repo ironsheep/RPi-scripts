@@ -1,0 +1,12 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+(set -x;sudo apt-get update)
+(set -x;sudo apt-get dist-upgrade)
+
+UPDFLG_FILE=~/bin/lastupd.date
+DATETIME=`date +%y%m%d%H%m`
+echo "${DATETIME}" >${UPDFLG_FILE}
+
+

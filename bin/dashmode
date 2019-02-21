@@ -1,0 +1,35 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+PARM=$1
+
+KIOSK_DIR=/var/www/html/kiosk
+MODEFILE=${KIOSK_DIR}/mode.flg
+
+if [ ! -n "${PARM}" ]; then
+  echo "${SCRIPT}: need [flight|dash|switch] as param \$1" >&2
+  ${SCRIPT} list
+  exit 1
+fi
+
+if [ ! "${PARM}" = "flight" ]; then
+  if [ ! "${PARM}" = "dash" ]; then
+    if [ ! "${PARM}" = "switch" ]; then
+      if [ "${PARM}" = "list" ]; then
+        MODE=`cat ${MODEFILE}`
+        echo "${SCRIPT}: current mode: [${MODE}]"
+        exit 0
+      else
+        echo "${SCRIPT} ERROR- unknown parameter [${PARM}]" >&2
+        ${SCRIPT}
+        exit 1
+      fi
+    fi
+  fi
+fi
+
+
+echo "${PARM}" >${MODEFILE}
+${SCRIPT} list
+exit 0

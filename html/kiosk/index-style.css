@@ -1,0 +1,76 @@
+body {
+    background-color: lightgrey;
+}
+
+h1 {
+    color: black;
+}
+
+p {
+    font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+    font-size: 20px;
+}
+
+div.table {
+    line-height: 50px;
+}
+
+table.data {
+  /* border: 1px solid #ddd; */
+  background-color: white;
+  border-radius: 15px 15px 0px 0px;
+}
+
+table.clear {
+  /* border: 1px solid #ddd; */
+  background-color: transparent;
+  vertical-align: top;
+}
+
+th {
+  /* top, right, bottom, left */
+  padding: 5px 10px 5px 10px;
+  text-align: center;
+  /* background: rgba(238, 150, 238, 1.0); */
+  background: hsl(195, 100%, 50%);
+  /* background: rgba(0, 226, 255, 0.50); */
+  /* background-color: #00BFFF; */
+  color: black;
+  border-bottom: 1px solid #ddd;
+  border-radius: 15px 15px 0px 0px;
+}
+
+td {
+  /* top, right, bottom, left */
+  padding: 5px 10px 5px 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+td.major {
+  /* top, right, bottom, left */
+  padding: 5px 10px 5px 10px;
+  border-bottom: 1px solid #ddd;
+  /* background: rgba(238, 150, 238, 0.75); */
+  /* background: rgba(0, 226, 255, 0.50); */
+  background: hsl(195, 100%, 85%);
+  /* border-radius: 0px 0px 0px 15px; */
+  border-radius: 20px 0px 0px 20px;
+}
+
+tr.data:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr.data:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+span.note {
+  color: orange;
+}
+
+p.major {
+  text-transform: uppercase;
+  color: black;
+  font-weight: bold;
+}
