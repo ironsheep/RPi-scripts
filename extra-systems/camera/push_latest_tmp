@@ -1,0 +1,35 @@
+#!/bin/bash
+SCRIPT=${0##*/}
+SCRIPT_VERSION="1.0"
+
+TARGET_DIR=/var/www/html/kiosk/camera0
+TMP_DIR=~/tmp
+mkdir -p ${TMP_DIR}
+
+TARGET_HOST=pimon1.home
+TARGET_FILENAME_FILE=${TARGET_DIR}/filename.dat
+TMP_FILENAME_FILE=${TMP_DIR}/filename.dat
+
+TMP_IMAGE_DIR=/tmp/motion
+
+IMAGE_FILENAME=`find ${TMP_IMAGE_DIR} -name '*.jpg' | tail -1`
+IMAGE_FSPEC=${IMAGE_FILENAME}
+
+if [ -n "${IMAGE_FSPEC}" ]; then
+if [ -f "${IMAGE_FSPEC}" ]; then
+  scp -p ${IMAGE_FSPEC} pi@${TARGET_HOST}:${TARGET_DIR}
+  IMAGE_BASENAME=`basename ${IMAGE_FSPEC}`
+  echo ${IMAGE_BASENAME} >${TMP_FILENAME_FILE}
+  scp -p ${TMP_FILENAME_FILE} pi@${TARGET_HOST}:${TARGET_FILENAME_FILE}
+else
+  echo "$SCRIPT: ERROR- file [${IMAGE_FSPEC}] not found, can't copy file!" >&2
+fi
+else 
+  echo "$SCRIPT: ERROR- no filename, can't copy file!" >&2
+  exit 1
+fi
+
+exit 0
+
+
+

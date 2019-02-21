@@ -1,0 +1,24 @@
+#!/bin/bash
+
+TARGET_DIR=/var/www/html/kiosk/camera0
+TMP_DIR=~/tmp
+mkdir -p ${TMP_DIR}
+
+TARGET_HOST=pimon1.home
+TARGET_FILENAME_FILE=${TARGET_DIR}/filename.dat
+TMP_FILENAME_FILE=${TMP_DIR}/filename.dat
+
+IMAGE_FSPEC=$1
+
+
+if [ -f ${IMAGE_FSPEC} ]; then
+  scp -p ${IMAGE_FSPEC} pi@${TARGET_HOST}:${TARGET_DIR}
+  IMAGE_BASENAME=`basename ${IMAGE_FSPEC}`
+  echo ${IMAGE_BASENAME} >${TMP_FILENAME_FILE}
+  scp -p ${TMP_FILENAME_FILE} pi@${TARGET_HOST}:${TARGET_FILENAME_FILE}
+fi
+
+exit 0
+
+
+

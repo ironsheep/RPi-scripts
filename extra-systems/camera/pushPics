@@ -1,0 +1,17 @@
+#!/bin/bash
+
+TARGET_DIR=/media/data/archive/cameras/cam0/TO_FILE
+TARGET_HOST=pimon1.home
+
+SRC_NODE=$1
+
+if [ -d "${SRC_NODE}" ]; then
+  for FIL in "${SRC_NODE}"/*; do
+    scp -p "${FIL}" ${TARGET_HOST}:${TARGET_DIR}
+  done
+else
+  if [ -f "${SRC_NODE}" ]; then
+    scp -p "${SRC_NODE}" ${TARGET_HOST}:${TARGET_DIR}
+  fi
+fi
+
