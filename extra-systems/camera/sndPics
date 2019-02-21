@@ -321,74 +321,47 @@ fi
 #  - list of files for this attempt
 #  - file: list of md5sums for files in this attempt
 KEYS_FILE="${TMP_DIR}/${SCRIPT}-keys.dat"
+(set -x;rm -f ${KEYS_FILE})
 
 OLDEST_IMAGE=`ls -1t ${PICS_DIR} | tail -1`
-PICNAME=`basename "${PIC}"`
+PICNAME=`basename "${OLDEST_IMAGE}"`
 debugMessage "PICNAME=[${PICNAME}]"
 REGEXP="^[0-9]{1,3}\-([0-9]{10,10}).*$"
 #echo "pic=${PICNAME}"
 [[ ${PICNAME} =~ ${REGEXP} ]] 
 DATE_KEY=${BASH_REMATCH[1]}
-#echo "${DATE_KEY}" >>${TMP_KEYS_FILE}
+echo "${DATE_KEY}" >>${KEYS_FILE}
 debugMessage "DATE_KEY=[${DATE_KEY}]"
 
-
-CREATE_KEYS_FILE=""
-
-if [ ! -f ${KEYS_FILE} ]; then
-  CREATE_KEYS_FILE=YES
-else 
-	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
-	debugMessage "(a) KEYS_CT=[${KEYS_CT}]"
-	if [ "${KEYS_CT}" -lt 1 ]; then
-		CREATE_KEYS_FILE=YES
-	fi
-fi
-
-if [ -n "${CREATE_KEYS_FILE}" ];then
-	verboseTimedMessage "calculating keys"
-	
-	#  NOTE: TODO do this only if newer photo's than last time!
-	
-	rm -f ${KEYS_FILE}
-	TMP_KEYS_FILE="${TMP_DIR}/f1"
-	rm -f ${TMP_KEYS_FILE}
-	
-	for PIC in `find ${PICS_DIR} -type f -print | grep -E "jpg|avi" | sort -n`; do
-		PICNAME=`basename "${PIC}"`
-		REGEXP="^[0-9]{1,3}\-([0-9]{10,10}).*$"
-		#echo "pic=${PICNAME}"
-		[[ ${PICNAME} =~ ${REGEXP} ]] 
-		dateKey=${BASH_REMATCH[1]}
-		echo "${dateKey}" >>${TMP_KEYS_FILE}
-	done
-	cat  ${TMP_KEYS_FILE} | sort -u >${KEYS_FILE}
-	rm -f ${TMP_KEYS_FILE}
-else 
-	verboseTimedMessage "using existing keys"
-fi
 
 verboseTimedMessage "checking findings"
 
 # if we've more than 1 key we can send another if not already sent
 KEYS_CT=`cat ${KEYS_FILE} | wc -l`
 debugMessage "(b) KEYS_CT=[${KEYS_CT}]"
-if [ "${KEYS_CT}" -gt 1 ]; then
+if [ "${KEYS_CT}" -gt 0 ]; then
 	debugMessage "we CAN send one!"
 else 
 	fatalMessage "No files to be sent, Done" 0
 fi
 
 # get the next key that has files
+# build up our list of files for this key
+FILES_FILE="${TMP_DIR}/${SCRIPT}-files.lst"
+debugMessage "Writing FILES_FILE=[${FILES_FILE}]"
+
 NEXT_KEY=""
 for PICKEY in `cat ${KEYS_FILE}`; do
-    FILESFOUND=`ls ${PICS_DIR}/*${PICKEY}* | wc -l`
+	# CRASH too long arg!    ls -1 ${PICS_DIR}/*${THISKEY}* > ${FILES_FILE}
+	(set -x;find "${PICS_DIR}" -name "*${PICKEY}*" -type f -print | egrep "avi|jpg" > ${FILES_FILE})
+    FILESFOUND=`cat ${FILES_FILE} | wc -l`
     verboseMessage "key=${PICKEY}: ct=${FILESFOUND}"
 	if [ "${FILESFOUND}" -gt 0 ]; then
 		NEXT_KEY=${PICKEY}
 		break;
 	fi
 done
+
 
 THISKEY=""
 # get the earliest key
@@ -410,16 +383,8 @@ if [ -f "${THISKEY_FLG}" ]; then
 	exit 1
 fi
 
-# remember that we sent this key's files
-(set -x;touch "${THISKEY_FLG}")
-
-# build up our list of files for this key
-FILES_FILE="${TMP_DIR}/${SCRIPT}-files.lst"
-
-# CRASH too long arg!    ls -1 ${PICS_DIR}/*${THISKEY}* > ${FILES_FILE}
-(set -x;find ${PICS_DIR} -name \'*${THISKEY}*\' -type f -print > ${FILES_FILE})
-    
-FILESCOUNT=`wc -l ${FILES_FILE}`
+  
+FILESCOUNT=`cat ${FILES_FILE} | wc -l`
 verboseTimedMessage "found ${FILESCOUNT} files"
 
 if [ "${FILESCOUNT}" -gt 0 ]; then
@@ -441,8 +406,10 @@ if [ "${FILESCOUNT}" -gt 0 ]; then
 	cd -
 	
 	verboseTimedMessage "generated the following files"
-	
 	ls -l ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE}
+	
+	# remember that we sent this key's files
+	(set -x;touch "${THISKEY_FLG}")
 	
 	if [ "${USE_SCP}" = "YES" ]; then
 	  scp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} pi@pimon1.home:${TARGET_DIR}
@@ -450,15 +417,6 @@ if [ "${FILESCOUNT}" -gt 0 ]; then
 	  (set -x;cp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} ${TARGET_DIR})
 	fi
 	
-	# remove this key from our remaining work list
-	TMP_KEYS_FILE="${TMP_DIR}/f1"
-	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
-	debugMessage "(rm1) KEYS_CT=[${KEYS_CT}]"
-	(set -x; mv ${KEYS_FILE} ${TMP_KEYS_FILE})
-	(set -x; egrep -v "${THISKEY}" ${TMP_KEYS_FILE} >${KEYS_FILE})
-	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
-	debugMessage "(rm2) KEYS_CT=[${KEYS_CT}]"
-
 else 
 	verboseMessage "Not processing ${FILESCOUNT} files"
 fi
