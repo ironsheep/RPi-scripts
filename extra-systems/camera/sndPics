@@ -15,6 +15,7 @@ Usage: ${SCRIPT} [-dhv]
  $SCRIPT v${SCRIPT_VERSION} send an hours\' worth of jpg/avi files to pimon1
  
 where:
+    -c          Catch up sending and removing tarballs only
     -h          Display this (h)elp and exit
     -d          Enable script-(d)ebug output
     -v          Enable (v)erbose mode. Can be used multiple times for increased
@@ -117,16 +118,20 @@ export DEBUG=""
 export DEBUG_LEVEL=0
 export VERBOSE_LEVEL=0
 export UNDER_AUTOMATOR=0
+export CATCH_UP=""
 
 # =============================================================================
 #  Process the command line arguments
 #
 OPTIND=1 # Reset is necessary if getopts was used previously in the script.  It is a good idea to make this local in a function.
-while getopts "hdv" opt; do
+while getopts "chdv" opt; do
     case "$opt" in
         h)
             show_help 0
             ;;
+        c)
+        	export CATCH_UP=yes
+        	;;
         d)
         	  export DEBUG_LEVEL=$((DEBUG_LEVEL+1))
         	  export DEBUG=yes
@@ -148,10 +153,21 @@ done
 
 shift "$((OPTIND-1))" # Shift off the options and optional --.
 
+if [ -n "${CATCH_UP}" ]; then
+	progressMessage "* Running in CATCH UP mode..."
+fi
 
 # =============================================================================
 #  final checks and setup before execution
 #
+assertFileExists ()
+{
+# has \$1 as filename
+   FILESPEC=$1
+   if [ ! -f "${FILESPEC}" ]; then
+     fatalMessage "assertFileExists: Required file [${FILESPEC}] NOT found, aborting" 1
+   fi
+}
 
 HOSTNAME=`uname -n`
 HOME_PI=pimon1
@@ -177,6 +193,18 @@ else
 fi
 debugMessage "USE_SCP=[${USE_SCP}]"
 
+
+# remove files we sent last time, we don't need them any more...
+DONE_FILES_CT=`ls -1 ${TMP_DIR}/*.done 2>/dev/null | wc -l`
+debugMessage "DONE_FILES_CT=[${DONE_FILES_CT}]"
+if [ "${DONE_FILES_CT}" -gt 0 ]; then
+	debugMessage "we have DONE files let's handle them"
+	(set -x;rm -f ${TMP_DIR}/*.done)
+else 
+	debugMessage "No DONE files to be processed, moving on..."
+fi
+   
+
 # copy any waiting CHECK-RESULT files to our local dir
 if [ "${USE_SCP}" = "YES" ]; then
   scp -p pi@pimon1.home:"${TARGET_DIR}/*Result" "${TMP_DIR}"
@@ -198,15 +226,6 @@ fi
 
 
 if [ "${RESULT_FILES_CT}" -gt 0 ]; then
-	DONE_FILES_CT=`ls -1 ${TMP_DIR}/*.done 2>/dev/null | wc -l`
-	debugMessage "DONE_FILES_CT=[${DONE_FILES_CT}]"
-	if [ "${DONE_FILES_CT}" -gt 0 ]; then
-		debugMessage "we have DONE files let's handle them"
-		(set -x;rm -f ${TMP_DIR}/*.done)
-	else 
-		debugMessage "No DONE files to be processed, moving on..."
-	fi
-   
 	for RSLTFIL in `ls -1 ${TMP_DIR}/*Result`; do
 		ISGOOD=`echo ${RSLTFIL} | grep -i goodresult`
 		ISBAD=`echo ${RSLTFIL} | grep -i badresult`
@@ -258,57 +277,130 @@ if [ "${RESULT_FILES_CT}" -gt 0 ]; then
 	done
 fi
 
+
+# EXTRA PASS we seem to have case where we somehow didn't sent some file-sets, let's do so now
+debugMessage "resending files that look like they haven't been..."
+
+for FILESET_TAR in `ls -1 ${TMP_DIR}/*.tar.gz`; do
+	FILESET_BASENAME=`basename ${FILESET_TAR} .tar.gz`
+	FILESET_FLG="${TMP_DIR}/${FILESET_BASENAME}.sent"
+	verboseMessage "Re-Sending ${FILESET_BASENAME}*..."
+	if [ ! -f "${FILESET_FLG}" ]; then
+		# we need to resend these!
+		MD5_FILE="${TMP_DIR}/${FILESET_BASENAME}.sum"
+		assertFileExists ${MD5_FILE}
+		TAR_FILE="${TMP_DIR}/${FILESET_BASENAME}.tar.gz"
+		assertFileExists ${TAR_FILE}
+		MD5_TARFILE="${TMP_DIR}/${FILESET_BASENAME}.tar.sum"
+		assertFileExists ${MD5_TARFILE}
+		if [ "${USE_SCP}" = "YES" ]; then
+			(set -x;scp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} pi@pimon1.home:${TARGET_DIR})
+		else
+			(set -x;cp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} ${TARGET_DIR})
+		fi
+		touch "${FILESET_FLG}"	# so we don't do all of this again...
+	else
+		verboseMessage "SKIPPED ${FILESET_BASENAME} already sent"
+	fi
+done
+
+# =============================================================================
+
+if [ -n "${CATCH_UP}" ]; then
+
+	infoMessage "CATCH UP mode, early exit" 
+	exit 0;
+fi
+
+# =============================================================================
+
 #fatalMessage "development early exit" 0
 
 
 # build up files to send
 #  - list of files for this attempt
 #  - file: list of md5sums for files in this attempt
-
-verboseTimedMessage "calculating keys"
-
 KEYS_FILE="${TMP_DIR}/${SCRIPT}-keys.dat"
-rm -f ${KEYS_FILE}
-TMP_KEYS_FILE="${TMP_DIR}/f1"
-rm -f ${TMP_KEYS_FILE}
 
-for PIC in `find ${PICS_DIR} -type f -print | grep -E "jpg|avi" | sort -n`; do
-	PICNAME=`basename "${PIC}"`
-	REGEXP="^[0-9]{1,3}\-([0-9]{10,10}).*$"
-	#echo "pic=${PICNAME}"
-	[[ ${PICNAME} =~ ${REGEXP} ]] 
-	dateKey=${BASH_REMATCH[1]}
-	echo "${dateKey}" >>${TMP_KEYS_FILE}
-done
-cat  ${TMP_KEYS_FILE} | sort -u >${KEYS_FILE}
-rm -f ${TMP_KEYS_FILE}
+OLDEST_IMAGE=`ls -1t ${PICS_DIR} | tail -1`
+PICNAME=`basename "${PIC}"`
+debugMessage "PICNAME=[${PICNAME}]"
+REGEXP="^[0-9]{1,3}\-([0-9]{10,10}).*$"
+#echo "pic=${PICNAME}"
+[[ ${PICNAME} =~ ${REGEXP} ]] 
+DATE_KEY=${BASH_REMATCH[1]}
+#echo "${DATE_KEY}" >>${TMP_KEYS_FILE}
+debugMessage "DATE_KEY=[${DATE_KEY}]"
+
+
+CREATE_KEYS_FILE=""
+
+if [ ! -f ${KEYS_FILE} ]; then
+  CREATE_KEYS_FILE=YES
+else 
+	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
+	debugMessage "(a) KEYS_CT=[${KEYS_CT}]"
+	if [ "${KEYS_CT}" -lt 1 ]; then
+		CREATE_KEYS_FILE=YES
+	fi
+fi
+
+if [ -n "${CREATE_KEYS_FILE}" ];then
+	verboseTimedMessage "calculating keys"
+	
+	#  NOTE: TODO do this only if newer photo's than last time!
+	
+	rm -f ${KEYS_FILE}
+	TMP_KEYS_FILE="${TMP_DIR}/f1"
+	rm -f ${TMP_KEYS_FILE}
+	
+	for PIC in `find ${PICS_DIR} -type f -print | grep -E "jpg|avi" | sort -n`; do
+		PICNAME=`basename "${PIC}"`
+		REGEXP="^[0-9]{1,3}\-([0-9]{10,10}).*$"
+		#echo "pic=${PICNAME}"
+		[[ ${PICNAME} =~ ${REGEXP} ]] 
+		dateKey=${BASH_REMATCH[1]}
+		echo "${dateKey}" >>${TMP_KEYS_FILE}
+	done
+	cat  ${TMP_KEYS_FILE} | sort -u >${KEYS_FILE}
+	rm -f ${TMP_KEYS_FILE}
+else 
+	verboseTimedMessage "using existing keys"
+fi
 
 verboseTimedMessage "checking findings"
 
-for PICKEY in `cat ${KEYS_FILE}`; do
-    FILESFOUND=`ls ${PICS_DIR}/*${PICKEY}* | wc -l`
-    verboseMessage "key=${PICKEY}: ct=${FILESFOUND}"
-done
-
 # if we've more than 1 key we can send another if not already sent
 KEYS_CT=`cat ${KEYS_FILE} | wc -l`
-debugMessage "KEYS_CT=[${KEYS_CT}]"
+debugMessage "(b) KEYS_CT=[${KEYS_CT}]"
 if [ "${KEYS_CT}" -gt 1 ]; then
 	debugMessage "we CAN send one!"
 else 
 	fatalMessage "No files to be sent, Done" 0
 fi
 
-# get the earliest key
-THISKEY=`head -1 ${KEYS_FILE}`
-verboseTimedMessage "processing ${THISKEY}"
+# get the next key that has files
+NEXT_KEY=""
+for PICKEY in `cat ${KEYS_FILE}`; do
+    FILESFOUND=`ls ${PICS_DIR}/*${PICKEY}* | wc -l`
+    verboseMessage "key=${PICKEY}: ct=${FILESFOUND}"
+	if [ "${FILESFOUND}" -gt 0 ]; then
+		NEXT_KEY=${PICKEY}
+		break;
+	fi
+done
 
-# build up our list of files for this key
-TMP_FILE="${TMP_DIR}/${SCRIPT}-files.lst"
-ls -1 ${PICS_DIR}/*${THISKEY}* > ${TMP_FILE}
-    
-FILESCOUNT=`wc -l ${TMP_FILE}`
-verboseTimedMessage "found ${FILESCOUNT} files"
+THISKEY=""
+# get the earliest key
+if [ -n "${NEXT_KEY}" ]; then
+  THISKEY="${NEXT_KEY}"
+fi
+verboseTimedMessage "processing [${THISKEY}]"
+
+if [ ! -n "${THISKEY}" ]; then
+	warningTimedMessage "failed to get next key, aborting"
+	exit 1
+fi
 
 # check if we've already handled THISKEY
 THISKEY_FLG="${TMP_DIR}/${SCRIPT}-${THISKEY}.sent"
@@ -318,30 +410,59 @@ if [ -f "${THISKEY_FLG}" ]; then
 	exit 1
 fi
 
-# create md5 sums file
-MD5_FILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.sum"
-md5sum ${PICS_DIR}/*${THISKEY}* >${MD5_FILE} 2>&1
+# remember that we sent this key's files
+(set -x;touch "${THISKEY_FLG}")
 
-# create tarball
-TAR_FILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.tar.gz"
-TAR_FILENAME=`basename ${TAR_FILE}`
+# build up our list of files for this key
+FILES_FILE="${TMP_DIR}/${SCRIPT}-files.lst"
 
-tar -czf ${TAR_FILE} ${PICS_DIR}/*${THISKEY}*
+# CRASH too long arg!    ls -1 ${PICS_DIR}/*${THISKEY}* > ${FILES_FILE}
+(set -x;find ${PICS_DIR} -name \'*${THISKEY}*\' -type f -print > ${FILES_FILE})
+    
+FILESCOUNT=`wc -l ${FILES_FILE}`
+verboseTimedMessage "found ${FILESCOUNT} files"
 
-MD5_TARFILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.tar.sum"
-cd ${TMP_DIR}
-md5sum ${TAR_FILENAME} >${MD5_TARFILE} 2>&1
-cd -
+if [ "${FILESCOUNT}" -gt 0 ]; then
 
-verboseTimedMessage "generated the following files"
+	# create md5 sums file
+	MD5_FILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.sum"
+	#md5sum ${PICS_DIR}/*${THISKEY}* >${MD5_FILE} 2>&1
+	(set -x;xargs md5sum < ${FILES_FILE} >${MD5_FILE})
+	
+	# create tarball
+	TAR_FILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.tar.gz"
+	TAR_FILENAME=`basename ${TAR_FILE}`
+	
+	(set -x;tar -czf ${TAR_FILE} --files-from ${FILES_FILE})
+	
+	MD5_TARFILE="${TMP_DIR}/${SCRIPT}-${THISKEY}.tar.sum"
+	cd ${TMP_DIR}
+	md5sum ${TAR_FILENAME} >${MD5_TARFILE} 2>&1
+	cd -
+	
+	verboseTimedMessage "generated the following files"
+	
+	ls -l ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE}
+	
+	if [ "${USE_SCP}" = "YES" ]; then
+	  scp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} pi@pimon1.home:${TARGET_DIR}
+	else
+	  (set -x;cp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} ${TARGET_DIR})
+	fi
+	
+	# remove this key from our remaining work list
+	TMP_KEYS_FILE="${TMP_DIR}/f1"
+	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
+	debugMessage "(rm1) KEYS_CT=[${KEYS_CT}]"
+	(set -x; mv ${KEYS_FILE} ${TMP_KEYS_FILE})
+	(set -x; egrep -v "${THISKEY}" ${TMP_KEYS_FILE} >${KEYS_FILE})
+	KEYS_CT=`cat ${KEYS_FILE} | wc -l`
+	debugMessage "(rm2) KEYS_CT=[${KEYS_CT}]"
 
-ls -l ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE}
-
-if [ "${USE_SCP}" = "YES" ]; then
-  scp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} pi@pimon1.home:${TARGET_DIR}
-else
-  (set -x;cp -p ${MD5_FILE} ${TAR_FILE} ${MD5_TARFILE} ${TARGET_DIR})
+else 
+	verboseMessage "Not processing ${FILESCOUNT} files"
 fi
+
 
 verboseTimedMessage "Done"
 exit 0
