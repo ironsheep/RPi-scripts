@@ -8,3 +8,5 @@ chkpkgs
 rmv-rc
 reKey
 notepi
+restoreLED
+toggleLED

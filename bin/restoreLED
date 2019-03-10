@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+
+TRIGGER=/sys/class/leds/led0/trigger
+BRIGHTNESS=/sys/class/leds/led0/brightness
+
+#(set -x; cat ${TRIGGER})
+#(set -x; cat ${BRIGHTNESS})
+
+checkmmc0 ()
+{
+#  \$1 is message to be included
+MESSAGE=$1
+TESTVAL=`cat ${TRIGGER} | grep "\[mmc0\]"`
+if [ -n "${TESTVAL}" ]; then
+   echo "mmc0 control is active [${MESSAGE}]" >&2
+else
+   echo "mmc0 control NOT active [${MESSAGE}]" >&2
+fi
+#echo "(DBG) TESTVAL=[${TESTVAL}]"
+}
+
+ledOFF () {
+  echo 0 >${BRIGHTNESS}
+}
+
+ledON () {
+  echo 1 >${BRIGHTNESS}
+}
+
+toggleLEDCount () {
+# pass count as \$1
+REPEAT_CT=$1
+LOOP_CT=0
+
+while [ $LOOP_CT -lt $REPEAT_CT ]
+do
+  ledOFF
+  sleep 1
+  ledON
+  sleep 2
+  let "LOOP_CT+=1"
+done
+}
+
+
+checkmmc0 "initial"
+echo mmc0 >${TRIGGER}
+checkmmc0 "now restored"
+
+exit 0

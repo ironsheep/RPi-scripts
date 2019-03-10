@@ -8,13 +8,14 @@ KIOSK_DIR=/var/www/html/kiosk
 MODEFILE=${KIOSK_DIR}/mode.flg
 
 if [ ! -n "${PARM}" ]; then
-  echo "${SCRIPT}: need [flight|dash|switch] as param \$1" >&2
+  echo "${SCRIPT}: need [flight|dash|home|switch] as param \$1" >&2
   ${SCRIPT} list
   exit 1
 fi
 
 if [ ! "${PARM}" = "flight" ]; then
   if [ ! "${PARM}" = "dash" ]; then
+  if [ ! "${PARM}" = "home" ]; then
     if [ ! "${PARM}" = "switch" ]; then
       if [ "${PARM}" = "list" ]; then
         MODE=`cat ${MODEFILE}`
@@ -25,6 +26,7 @@ if [ ! "${PARM}" = "flight" ]; then
         ${SCRIPT}
         exit 1
       fi
+    fi
     fi
   fi
 fi

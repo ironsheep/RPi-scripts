@@ -24,6 +24,7 @@
   </tr>
   <td height="200px">
   <P><a href="http://pitre.home:8080/">PiAware Skyview [FlightAware]</a></P>
+  <P><a href="http://piassist.home:8123/">HomeAssistant - home control panel</a></P>
   <P><a href="/apache2-default.html">Apache Default Page</a></P>
   <P><a href="/phpInfo.php">PHP Settings Page</a></P>
   </td>
@@ -92,6 +93,27 @@ foreach ($piArray as $pi) {
    if(substr($model, 0, strlen($prefix)) == $prefix) {
      $model = "R" . substr($model, strlen($prefix));
    }
+   $model = str_replace("i Model", "i 1 Model", $model);
+   #$model = str_replace("Model ", "", $model);
+   $model = str_replace("Rev ", " r", $model);
+   $model = str_replace(" Plus ", "+", $model);
+
+   if(strpos($model, "Pi 3 ") !== false) {
+     if(strpos($model, " A ") !== false) {
+       $model = $model . " [w,b]";
+     } else {
+       $model = $model . " [e,w,b]";
+     }
+   } elseif(strpos($model, "Pi 2 ") !== false) {
+      $model = $model . " [e]";
+   } elseif(strpos($model, "Pi 1 ") !== false) {
+     if(strpos($model, " A ") !== false) {
+        ; # nothing for this case
+     } else {
+         $model = $model . " [e]";
+     }
+   }
+
    if(!empty($note)) {
      echo "<td><p>" . $model . "<br><span class=\"note\">(" . $note . ")</span></p></td>";
    }
