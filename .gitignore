@@ -2,4 +2,5 @@
 
 #  not our Finder / Desktop data either
 .DS_Store
+*-old
 

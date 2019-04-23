@@ -14,18 +14,28 @@ fi
 
 mkdir -p ~/.cronWork
 
+ALIAS_FILE=~/.bash_aliases
+
 if [ "${USE_SCP}" = "YES" ]; then
+	# --> get latest .dat file (list of scripts)
 	FILELIST=syncpi-files.dat
 	scp pi@pimon1:~/bin/syncpi*dat ~/bin
 	FILES=`cat ~/bin/${FILELIST} | egrep -v "#"`
+	# --> get latest scripts
 	for FIL in $FILES; do
 		scp pi@pimon1:~/bin/${FIL} ~/bin
 	done
+	# --> install .cronWork if not already
         CRON_DIR=/home/pi/\.cronWork
         scp pi@pimon1.home:${CRON_DIR}/updcron ${CRON_DIR}
         if [ ! -f ${CRON_DIR}/crontab.pi ]; then
           scp pi@pimon1.home:${CRON_DIR}/crontab.pi ${CRON_DIR}
         fi
+	# --> update aliases if not present
+	if [ ! -f "${ALIAS_FILE}" ]; then
+          scp pi@pimon1.home:~/.bash_aliases ~/
+        fi
+
 else
 	echo "$SCRIPT: nothing to do on this RPi"
 fi
