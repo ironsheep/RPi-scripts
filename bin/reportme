@@ -33,7 +33,7 @@ FILES="${FILES} ${OUTFILE}"
 
 # --> get linux release name
 OUTFILE=rls-name.txt
-RLS_NAME=`cat /etc/apt/sources.list | egrep -v '#' | awk '{ print $3 }' | sort -u`
+RLS_NAME=`cat /etc/apt/sources.list | egrep -v '#' | awk '{ print $3 }' | grep . | sort -u`
 echo "${RLS_NAME}" >"${TMP_DIR}/${OUTFILE}"
 FILES="${FILES} ${OUTFILE}"
 
@@ -58,7 +58,7 @@ UPDFLG_FILE=~/bin/lastupd.date
 if [ ! -f ${UPDFLG_FILE} ] ; then
 	DATETIME=`date +%y%m%d%H%m`
 	echo "${DATETIME}" >${UPDFLG_FILE}
-        touch -t ${DATETIME} ${UPDFLG_FILE}
+	touch -t ${DATETIME} ${UPDFLG_FILE}
 fi
 cp -p ${UPDFLG_FILE} "${TMP_DIR}/${OUTFILE}"
 FILES="${FILES} ${OUTFILE}"
@@ -76,6 +76,33 @@ OUTFILE=systemp.txt
 SYSTEMP=`/opt/vc/bin/vcgencmd measure_temp | tr -d '\0'`
 echo "${SYSTEMP}" >"${TMP_DIR}/${OUTFILE}"
 FILES="${FILES} ${OUTFILE}"
+
+# --> get installed package list
+#
+OUTFILE="selections-${HOSTNAME}-${RLS_NAME}.txt"
+OUTFSPEC="${TMP_DIR}/${OUTFILE}"
+SENTFSPEC="${TMP_DIR}/selections-${HOSTNAME}-${RLS_NAME}-SENT.txt"
+
+SENDFILE="no"
+
+dpkg --get-selections >"${OUTFSPEC}"
+if [ ! -f "${SENTFSPEC}" ]; then
+	# no last sent, send this new one now
+	cp -p "${OUTFSPEC}" "${SENTFSPEC}"
+	SENDFILE="yes"
+else 
+	diff -a "${OUTFSPEC}" "${SENTFSPEC}"
+	RETCODE=$?
+	if [ "${RETCODE}" -ne 0 ]; then
+		# latest file is different send this latest and remember it
+		cp -p "${OUTFSPEC}" "${SENTFSPEC}"
+		SENDFILE="yes"
+	fi
+fi
+if [ "${SENDFILE}" = "yes" ]; then
+	# record that we need to send this new file
+	FILES="${FILES} ${OUTFILE}"
+fi
 
 if [ "${USE_SCP}" = "YES" ]; then
 	for FIL in ${FILES}; do
