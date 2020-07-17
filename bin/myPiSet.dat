@@ -1,5 +1,9 @@
+#192.168.86.163	pimon1-wifi.home		pimon1-wifi
+#192.168.86.163	retropie.home			retropie
+#192.168.86.164	piplant1-wifi.home		piplant1-wifi
+#192.168.86.165	dex-wifi.home			dex-wifi
 # stephen m's Raspberry pi basic
-#192.168.100.40  pitoo.home             pitoo
+192.168.100.40  pitoo.home             pitoo
 # stephen m's Raspberry pi2+ for use as virtual USB (model a21041 16GB SD)
 192.168.100.41  pitvos.home            pitvos
 # stephen m's Raspberry pi2+ experimental node (model a21041 32GB SD)
@@ -12,6 +16,7 @@
 192.168.100.45  pinode4.home           pinode4
 # stephen m's Raspberry pi (BrickPI Dexter Industries - I/F for lego stuff)
 192.168.100.46  brickpi.home        brickpi
+192.168.100.146  brickpi-wifi.home        brickpi
 # stephen m's Raspberry piB experimental node (model a02082 32GB SD)
 192.168.100.47  piplant1.home          piplant1
 192.168.100.147	piplant1-wifi.home	piplant1-wifi
@@ -27,11 +32,21 @@
 192.168.100.81  pibtle.home            pibtle
 # stephen m's Raspberry pi2+ w/7" touchscreen (model a21041 8GB SD)
 192.168.100.82  pitouch.home           pitouch
-# Stephen's gaming system RPi
-192.168.100.83	retropie.home			retropie
-192.168.100.183	retropie-wifi.home			retropie-wifi
+192.168.100.83	retropie.home 	       retropie
+192.168.100.183	retropie-wifi.home      retropie-wifi
 192.168.100.84	pitre.home 	       pitre
 192.168.100.184	pitre-wifi.home      pitre-wifi
-192.168.100.85	pihome.home 	       pihome
-192.168.100.185	pihome-wifi.home      pihome-wifi
-
+192.168.100.85	piradio.home 	       piradio
+192.168.100.185	piradio-wifi.home      piradio-wifi
+192.168.100.86	piforward.home 	       piforward
+192.168.100.186	piforward-wifi.home    piforward-wifi
+192.168.100.87	pimatrix.home 	       pimatrix
+192.168.100.187	pimatrix-wifi.home      pimatrix-wifi
+#192.168.100.88	pitest2.home 	       pitest2
+#192.168.100.188	pitest2-wifi.home      pitest2-wifi
+192.168.100.89	pi3plus.home 	       pi3plus
+192.168.100.189	pi3plus-wifi.home       pi3plus-wifi
+192.168.100.90	pifour.home 	       pifour
+192.168.100.190	pifour-wifi.home       pifour-wifi
+192.168.100.91	pihassio.home 	       pihassio
+192.168.100.191	pihassio-wifi.home     pihassio-wifi

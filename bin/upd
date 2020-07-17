@@ -9,4 +9,5 @@ UPDFLG_FILE=~/bin/lastupd.date
 DATETIME=`date +%y%m%d%H%m`
 echo "${DATETIME}" >${UPDFLG_FILE}
 
+(set -x;reportme)
 

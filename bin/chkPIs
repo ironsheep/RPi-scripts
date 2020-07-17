@@ -18,6 +18,11 @@ IP_SET=`cat "${IP_MASTER}" | egrep -v "^#" | grep . | egrep -v "\.86\." | awk '{
 
 STATUS_DIR=/var/status
 
+DASHBOARD_DIR=/var/www/html/kiosk
+HASS_HOST_FILENAME=hass-host
+
+HASS_HOST_FILESPEC=${DASHBOARD_DIR}/${HASS_HOST_FILENAME}
+
 rm -f ${STATUS_DIR}/*/up.dat
 rm -f ${STATUS_DIR}/*/down.dat
 
@@ -33,6 +38,9 @@ for CURR_IP in ${IP_SET}; do
   ISUP=`grep " ms" ${TEMP_FILE} | wc -l`
   #echo "$SCRIPT: ${ISUP}"
   ADJ_HOSTNAME=${CURR_HOSTNAME%"-wifi"}
+  if [ ${ADJ_HOSTNAME} = "piassist" ]; then
+    echo "${CURR_HOSTNAME}" > ${HASS_HOST_FILESPEC}
+  fi
   PI_DIR=${STATUS_DIR}/${ADJ_HOSTNAME}
   if [ ! -d ${PI_DIR} ]; then
     (set -x; mkdir -p ${PI_DIR})

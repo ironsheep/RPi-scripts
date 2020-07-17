@@ -21,10 +21,10 @@ if [ ! -x "${SCR_ACTUAL}" ]; then
 fi
 shift
 
-OUTDIR="Log Files"
-if [ ! -d "$OUTDIR" ]; then
-	mkdir "$OUTDIR"
-	echo "$SCRIPT: Created $OUTDIR Directory"
+LOGDIR=~/tmp/LogDir
+if [ ! -d "$LOGDIR" ]; then
+	mkdir "$LOGDIR"
+	echo "$SCRIPT: Created $LOGDIR Directory"
 fi
 
 # remove dir and suffix components of name
@@ -32,10 +32,10 @@ OUTBASE=`basename $SCR_TO_RUN .bat`
 OUTBASE=`basename $OUTBASE .ksh`
 OUTBASE=`basename $OUTBASE .exe`
 SFX=1
-OUTFILE="${OUTDIR}/${OUTBASE}.${SFX}.log"
+OUTFILE="${LOGDIR}/${OUTBASE}.${SFX}.log"
 while [ -f "$OUTFILE" ]; do
     SFX=`expr $SFX + 1`
-    OUTFILE="${OUTDIR}/${OUTBASE}.${SFX}.log"
+    OUTFILE="${LOGDIR}/${OUTBASE}.${SFX}.log"
 done
 
 if [ -s "$OUTFILE" ]; then

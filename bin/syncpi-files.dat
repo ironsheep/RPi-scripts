@@ -10,3 +10,7 @@ reKey
 notepi
 restoreLED
 toggleLED
+savSelections
+myMotd
+lsNonComment
+
